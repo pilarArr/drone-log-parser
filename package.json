@@ -1,0 +1,38 @@
+{
+  "name": "drone-log-parser",
+  "version": "1.0.0",
+  "description": "A package to parse drone log files to consumable json files",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "jest": "^21.2.0"
+  },
+  "scripts": {
+    "build": "babel --presets env src -d ./ --ignore src/index.test.js",
+    "dev": "babel --presets env src -d ./ --watch --ignore src/index.test.js",
+    "test": "jest --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pilarArr/drone-log-parser.git"
+  },
+  "keywords": [
+    "npm",
+    "log",
+    "drone",
+    "rpa",
+    "parser",
+    "pixhawk",
+    "apm",
+    "ardupilot"
+  ],
+  "author": "pilarArr",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pilarArr/drone-log-parser/issues"
+  },
+  "homepage": "https://github.com/pilarArr/drone-log-parser#readme"
+}
