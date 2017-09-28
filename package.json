@@ -3,17 +3,26 @@
   "version": "1.0.0",
   "description": "A package to parse drone log files to consumable json files",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "line-reader": "^0.4.0"
+  },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.0",
-    "jest": "^21.2.0"
+    "jest": "^21.2.0",
+    "babel-jest": "^20.0.3",
+    "babel-preset-env": "^1.6.0",
+    "eslint": "^4.6.0",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-import": "^2.7.0",
+    "jest": "^20.0.4"
   },
   "scripts": {
-    "build": "babel --presets env src -d ./ --ignore src/index.test.js",
+    "build": "babel src -d ./ --ignore src/index.test.js",
     "dev": "babel --presets env src -d ./ --watch --ignore src/index.test.js",
-    "test": "jest --watch"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "repository": {
     "type": "git",
