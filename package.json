@@ -34,13 +34,22 @@
       "expect": false
     },
     "rules": {
-      "indent": ["error", 2],
-      "no-tabs": ["error"],
-      "no-mixed-spaces-and-tabs": ["error"],
+      "indent": [
+        "error",
+        2
+      ],
+      "no-tabs": [
+        "error"
+      ],
+      "no-mixed-spaces-and-tabs": [
+        "error"
+      ],
       "import/no-unresolved": 0,
       "import/no-extraneous-dependencies": 0,
       "import/extensions": 0,
-      "no-underscore-dangle": ["error"],
+      "no-underscore-dangle": [
+        "error"
+      ],
       "class-methods-use-this": 0
     }
   },
