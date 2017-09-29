@@ -2,27 +2,47 @@
   "name": "drone-log-parser",
   "version": "1.0.0",
   "description": "A package to parse drone log files to consumable json files",
-  "main": "index.js",
+  "main": "build/index.js",
   "dependencies": {
     "line-reader": "^0.4.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.0",
-    "jest": "^21.2.0",
-    "babel-jest": "^20.0.3",
-    "babel-preset-env": "^1.6.0",
-    "eslint": "^4.6.0",
-    "eslint-config-airbnb": "^15.1.0",
+    "eslint": "^4.7.2",
+    "eslint-config-airbnb-base": "^12.0.1",
     "eslint-plugin-import": "^2.7.0",
-    "jest": "^20.0.4"
+    "jest": "^21.2.1"
   },
   "scripts": {
-    "build": "babel src -d ./ --ignore src/index.test.js",
-    "dev": "babel --presets env src -d ./ --watch --ignore src/index.test.js",
+    "build": "babel src -d build --ignore '**/*.test.js'",
+    "dev": "babel src -d build --ignore '**/*.test.js' --watch",
     "test": "jest",
     "test:watch": "jest --watch"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "airbnb-base",
+    "env": {
+      "node": true
+    },
+    "globals": {
+      "expect": false
+    },
+    "rules": {
+      "indent": ["error", 2],
+      "no-tabs": ["error"],
+      "no-mixed-spaces-and-tabs": ["error"],
+      "import/no-unresolved": 0,
+      "import/no-extraneous-dependencies": 0,
+      "import/extensions": 0,
+      "no-underscore-dangle": ["error"],
+      "class-methods-use-this": 0
+    }
   },
   "repository": {
     "type": "git",
