@@ -1,4 +1,5 @@
 import * as lineReader from 'line-reader';
+import * as fs from 'fs';
 
 export const log2var = (myLogPath, callback) => {
   const myLogVar = {};
@@ -85,9 +86,17 @@ export const log2var = (myLogPath, callback) => {
   });
 };
 
-export const log2JSON = (myLogPath) => {
+export const log2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   log2var(myLogPath, (myLogVar) => {
-    const myLogJSON = '{\n';
-    const sep1 = '';
+    if (fs.existsSync(myJSONPath)) {
+      fs.unlinkSync(myJSONPath);
+    }
+    // check for json extension
+    let myFinalPath = myJSONPath;
+    const myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
+    if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}.json`; }
+
+    fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
   });
 };
