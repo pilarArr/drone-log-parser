@@ -20,7 +20,8 @@
     "dev": "babel src -d build --ignore '**/*.test.js' --watch",
     "test": "jest",
     "test:watch": "jest --watch",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "release": "np"
   },
   "babel": {
     "presets": [
