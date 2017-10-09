@@ -88,15 +88,18 @@ export const log2var = (myLogPath, callback) => {
 
 export const log2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   log2var(myLogPath, (myLogVar) => {
-    if (fs.existsSync(myJSONPath)) {
-      fs.unlinkSync(myJSONPath);
-    }
     // check for json extension
     let myFinalPath = myJSONPath;
     const myExtension = myFinalPath.slice(-5);
     if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
     if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}.json`; }
 
+    // add numbers if path exists. do not overwrite or delete
+    let copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
     fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
   });
 };

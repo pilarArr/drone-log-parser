@@ -1,5 +1,5 @@
-import { log2var } from './index';
+import { log2var, log2JSON } from './index';
 
-test('replaces blacklisted words with asterisks', () => (
+test('sample test', () => (
   expect('helloworld').toBe('helloworld')
 ));

@@ -104,9 +104,6 @@ var log2JSON = exports.log2JSON = function log2JSON(myLogPath) {
   var myJSONPath = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : myLogPath + '.json';
 
   log2var(myLogPath, function (myLogVar) {
-    if (fs.existsSync(myJSONPath)) {
-      fs.unlinkSync(myJSONPath);
-    }
     // check for json extension
     var myFinalPath = myJSONPath;
     var myExtension = myFinalPath.slice(-5);
@@ -117,6 +114,12 @@ var log2JSON = exports.log2JSON = function log2JSON(myLogPath) {
       myFinalPath = myLogPath + '.json';
     }
 
+    // add numbers if path exists. do not overwrite or delete
+    var copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
     fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
   });
 };
