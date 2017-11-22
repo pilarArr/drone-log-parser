@@ -1,6 +1,62 @@
 import * as lineReader from 'line-reader';
 import * as fs from 'fs';
 
+
+export const txt2var = (myLogPath, callback) => {
+  const myLogVar = {};
+
+  function parseDataLog(dataLine) {
+    const removeBrakets = dataLine.substr(1).slice(0, -1);
+    const splitItems = removeBrakets.split(', ');
+
+    const resultObject = {};
+    splitItems.forEach((keyValue) => {
+      const splitKeyValue = keyValue.split(' : ');
+      const itemKey = splitKeyValue[0];
+      const itemData = splitKeyValue[1];
+      if (Number.isNaN(Number(itemData))) {
+        resultObject[itemKey] = itemData;
+      } else {
+        resultObject[itemKey] = Number(itemData);
+      }
+    });
+    return resultObject;
+  }
+
+  function parseLine(textLine) {
+    const lineArr = textLine.split(' ');
+    const finalLineArr = lineArr.slice(0, 3);
+    finalLineArr.push(lineArr.slice(3).join(' '));
+    finalLineArr[1] = finalLineArr[1].slice(0, -1);
+
+    const timeStamp = finalLineArr.slice(0, 2).join(' ');
+    const dataName = finalLineArr[2];
+    const dataLog = finalLineArr[3];
+    const isPropertyDefined = Object.prototype.hasOwnProperty.call(myLogVar, dataName);
+
+    if (!isPropertyDefined) {
+      myLogVar[dataName] = [];
+    }
+
+    const lastIndexInDataArray = myLogVar[dataName].length;
+
+    const dataLogObject = parseDataLog(dataLog);
+    dataLogObject.TimeLog = timeStamp;
+    myLogVar[dataName][lastIndexInDataArray] = dataLogObject;
+  }
+
+  if (!fs.existsSync(myLogPath)) {
+    throw new Error('File does not exist');
+  }
+
+  lineReader.eachLine(myLogPath, (line,last) => { // eslint-disable-line
+    parseLine(line);
+    if (last) {
+      callback(myLogVar);
+    }
+  });
+};
+
 export const log2var = (myLogPath, callback) => {
   const myLogVar = {};
 
@@ -88,6 +144,24 @@ export const log2var = (myLogPath, callback) => {
 
 export const log2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   log2var(myLogPath, (myLogVar) => {
+    // check for json extension
+    let myFinalPath = myJSONPath;
+    const myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
+    if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}.json`; }
+
+    // add numbers if path exists. do not overwrite or delete
+    let copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
+    fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
+  });
+};
+
+export const txt2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
+  txt2var(myLogPath, (myLogVar) => {
     // check for json extension
     let myFinalPath = myJSONPath;
     const myExtension = myFinalPath.slice(-5);

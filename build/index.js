@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.log2JSON = exports.log2var = undefined;
+exports.txt2JSON = exports.log2JSON = exports.log2var = exports.txt2var = undefined;
 
 var _lineReader = require('line-reader');
 
@@ -14,6 +14,62 @@ var _fs = require('fs');
 var fs = _interopRequireWildcard(_fs);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var txt2var = exports.txt2var = function txt2var(myLogPath, callback) {
+  var myLogVar = {};
+
+  function parseDataLog(dataLine) {
+    var removeBrakets = dataLine.substr(1).slice(0, -1);
+    var splitItems = removeBrakets.split(', ');
+
+    var resultObject = {};
+    splitItems.forEach(function (keyValue) {
+      var splitKeyValue = keyValue.split(' : ');
+      var itemKey = splitKeyValue[0];
+      var itemData = splitKeyValue[1];
+      if (Number.isNaN(Number(itemData))) {
+        resultObject[itemKey] = itemData;
+      } else {
+        resultObject[itemKey] = Number(itemData);
+      }
+    });
+    return resultObject;
+  }
+
+  function parseLine(textLine) {
+    var lineArr = textLine.split(' ');
+    var finalLineArr = lineArr.slice(0, 3);
+    finalLineArr.push(lineArr.slice(3).join(' '));
+    finalLineArr[1] = finalLineArr[1].slice(0, -1);
+
+    var timeStamp = finalLineArr.slice(0, 2).join(' ');
+    var dataName = finalLineArr[2];
+    var dataLog = finalLineArr[3];
+    var isPropertyDefined = Object.prototype.hasOwnProperty.call(myLogVar, dataName);
+
+    if (!isPropertyDefined) {
+      myLogVar[dataName] = [];
+    }
+
+    var lastIndexInDataArray = myLogVar[dataName].length;
+
+    var dataLogObject = parseDataLog(dataLog);
+    dataLogObject.TimeLog = timeStamp;
+    myLogVar[dataName][lastIndexInDataArray] = dataLogObject;
+  }
+
+  if (!fs.existsSync(myLogPath)) {
+    throw new Error('File does not exist');
+  }
+
+  lineReader.eachLine(myLogPath, function (line, last) {
+    // eslint-disable-line
+    parseLine(line);
+    if (last) {
+      callback(myLogVar);
+    }
+  });
+};
 
 var log2var = exports.log2var = function log2var(myLogPath, callback) {
   var myLogVar = {};
@@ -104,6 +160,30 @@ var log2JSON = exports.log2JSON = function log2JSON(myLogPath) {
   var myJSONPath = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : myLogPath + '.json';
 
   log2var(myLogPath, function (myLogVar) {
+    // check for json extension
+    var myFinalPath = myJSONPath;
+    var myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') {
+      myFinalPath = myJSONPath + '.json';
+    }
+    if (myFinalPath.length === 5) {
+      myFinalPath = myLogPath + '.json';
+    }
+
+    // add numbers if path exists. do not overwrite or delete
+    var copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
+    fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
+  });
+};
+
+var txt2JSON = exports.txt2JSON = function txt2JSON(myLogPath) {
+  var myJSONPath = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : myLogPath + '.json';
+
+  txt2var(myLogPath, function (myLogVar) {
     // check for json extension
     var myFinalPath = myJSONPath;
     var myExtension = myFinalPath.slice(-5);
