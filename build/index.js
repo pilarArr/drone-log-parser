@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.txt2JSON = exports.log2JSON = exports.log2var = exports.txt2var = undefined;
+exports.txtObject2JSON = exports.logObject2JSON = exports.txt2JSON = exports.log2JSON = exports.log2var = exports.txt2var = undefined;
 
 var _lineReader = require('line-reader');
 
@@ -201,5 +201,67 @@ var txt2JSON = exports.txt2JSON = function txt2JSON(myLogPath) {
       copy += 1;
     }
     fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
+  });
+};
+
+var logObject2JSON = exports.logObject2JSON = function logObject2JSON(object2Extract, myLogPath) {
+  var myJSONPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : myLogPath + '-' + object2Extract + '.json';
+
+  log2var(myLogPath, function (myLogVar) {
+    // check for json extension
+    var myFinalPath = myJSONPath;
+    var myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') {
+      myFinalPath = myJSONPath + '.json';
+    }
+    if (myFinalPath.length === 5) {
+      myFinalPath = myLogPath + '-' + object2Extract + '.json';
+    }
+
+    // add numbers if path exists. do not overwrite or delete
+    var copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
+    var logHasObject = Object.prototype.hasOwnProperty.call(myLogVar, object2Extract);
+    if (logHasObject) {
+      var result = {};
+      result[object2Extract] = myLogVar[object2Extract];
+      fs.appendFileSync(myFinalPath, JSON.stringify(result));
+    } else {
+      throw new Error(object2Extract + ' not in log');
+    }
+  });
+};
+
+var txtObject2JSON = exports.txtObject2JSON = function txtObject2JSON(object2Extract, myLogPath) {
+  var myJSONPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : myLogPath + '-' + object2Extract + '.json';
+
+  txt2var(myLogPath, function (myLogVar) {
+    // check for json extension
+    var myFinalPath = myJSONPath;
+    var myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') {
+      myFinalPath = myJSONPath + '.json';
+    }
+    if (myFinalPath.length === 5) {
+      myFinalPath = myLogPath + '-' + object2Extract + '.json';
+    }
+
+    // add numbers if path exists. do not overwrite or delete
+    var copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
+    var logHasObject = Object.prototype.hasOwnProperty.call(myLogVar, object2Extract);
+    if (logHasObject) {
+      var result = {};
+      result[object2Extract] = myLogVar[object2Extract];
+      fs.appendFileSync(myFinalPath, JSON.stringify(result));
+    } else {
+      throw new Error(object2Extract + ' not in log');
+    }
   });
 };

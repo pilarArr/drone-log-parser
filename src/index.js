@@ -177,3 +177,53 @@ export const txt2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
     fs.appendFileSync(myFinalPath, JSON.stringify(myLogVar));
   });
 };
+
+export const logObject2JSON = (object2Extract, myLogPath, myJSONPath = `${myLogPath}-${object2Extract}.json`) => {
+  log2var(myLogPath, (myLogVar) => {
+    // check for json extension
+    let myFinalPath = myJSONPath;
+    const myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
+    if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}-${object2Extract}.json`; }
+
+    // add numbers if path exists. do not overwrite or delete
+    let copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
+    const logHasObject = Object.prototype.hasOwnProperty.call(myLogVar, object2Extract);
+    if (logHasObject) {
+      const result = {};
+      result[object2Extract] = myLogVar[object2Extract];
+      fs.appendFileSync(myFinalPath, JSON.stringify(result));
+    } else {
+      throw new Error(`${object2Extract} not in log`);
+    }
+  });
+};
+
+export const txtObject2JSON = (object2Extract, myLogPath, myJSONPath = `${myLogPath}-${object2Extract}.json`) => {
+  txt2var(myLogPath, (myLogVar) => {
+    // check for json extension
+    let myFinalPath = myJSONPath;
+    const myExtension = myFinalPath.slice(-5);
+    if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
+    if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}-${object2Extract}.json`; }
+
+    // add numbers if path exists. do not overwrite or delete
+    let copy = 1;
+    while (fs.existsSync(myFinalPath)) {
+      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
+      copy += 1;
+    }
+    const logHasObject = Object.prototype.hasOwnProperty.call(myLogVar, object2Extract);
+    if (logHasObject) {
+      const result = {};
+      result[object2Extract] = myLogVar[object2Extract];
+      fs.appendFileSync(myFinalPath, JSON.stringify(result));
+    } else {
+      throw new Error(`${object2Extract} not in log`);
+    }
+  });
+};
