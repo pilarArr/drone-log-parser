@@ -1,6 +1,6 @@
 {
   "name": "drone-log-parser",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A package to parse drone log files to consumable json files",
   "main": "build/index.js",
   "dependencies": {
