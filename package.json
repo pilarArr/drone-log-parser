@@ -4,7 +4,6 @@
   "description": "A package to parse drone log files to consumable json files",
   "main": "build/index.js",
   "dependencies": {
-    "fs": "0.0.1-security",
     "line-reader": "^0.4.0"
   },
   "devDependencies": {
@@ -20,7 +19,6 @@
     "dev": "babel src -d build --ignore '**/*.test.js' --watch",
     "test": "jest",
     "test:watch": "jest --watch",
-    "prepublish": "npm run build",
     "release": "np"
   },
   "babel": {
