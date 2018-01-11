@@ -1,8 +1,8 @@
-import * as lineReader from 'line-reader';
-import * as fs from 'fs';
+import lineReader from 'line-reader';
+import fs from 'fs';
 
 
-export const txt2var = (myLogPath, callback) => {
+const txt2var = (myLogPath, callback) => {
   const myLogVar = {};
 
   function parseDataLog(dataLine) {
@@ -57,7 +57,7 @@ export const txt2var = (myLogPath, callback) => {
   });
 };
 
-export const log2var = (myLogPath, callback) => {
+const log2var = (myLogPath, callback) => {
   const myLogVar = {};
 
   function parseFMT(lineArray) {
@@ -142,7 +142,7 @@ export const log2var = (myLogPath, callback) => {
   });
 };
 
-export const log2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
+const log2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   log2var(myLogPath, (myLogVar) => {
     // check for json extension
     let myFinalPath = myJSONPath;
@@ -160,7 +160,7 @@ export const log2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   });
 };
 
-export const txt2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
+const txt2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   txt2var(myLogPath, (myLogVar) => {
     // check for json extension
     let myFinalPath = myJSONPath;
@@ -178,52 +178,149 @@ export const txt2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
   });
 };
 
-export const logObject2JSON = (object2Extract, myLogPath, myJSONPath = `${myLogPath}-${object2Extract}.json`) => {
-  log2var(myLogPath, (myLogVar) => {
-    // check for json extension
-    let myFinalPath = myJSONPath;
-    const myExtension = myFinalPath.slice(-5);
-    if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
-    if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}-${object2Extract}.json`; }
+const logObject2JSON = (object2Extract, myLogPath, myJSONPath) => {
+  const myLogVar = {};
+  myLogVar[object2Extract] = [];
+  
+  const logMetaData = {};
+  logMetaData.FMT = [];
 
-    // add numbers if path exists. do not overwrite or delete
-    let copy = 1;
-    while (fs.existsSync(myFinalPath)) {
-      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
-      copy += 1;
+  if (!fs.existsSync(myLogPath)) {
+    throw new Error('Log File Does not Exist');
+  }
+
+  let myColumnMetadata = [];
+
+  function findMyMetadata() {
+    // Search for the FMT value to get columns
+    // TODO try to make this bisection search after a merge-sort of the FMT
+    // array by name to make the search faster.
+    const numberOfFMTMessages = logMetaData.FMT.length;
+    for (let i = 0; i < numberOfFMTMessages; i += 1) {
+      if (logMetaData.FMT[i].Name === object2Extract) {
+        myColumnMetadata = logMetaData.FMT[i].Columns;
+        break;
+      }
     }
-    const logHasObject = Object.prototype.hasOwnProperty.call(myLogVar, object2Extract);
-    if (logHasObject) {
-      const result = {};
-      result[object2Extract] = myLogVar[object2Extract];
-      fs.appendFileSync(myFinalPath, JSON.stringify(result));
-    } else {
-      throw new Error(`${object2Extract} not in log`);
+  }
+
+  function parseFMT(lineArray) {
+    const columns = ['Type', 'Length', 'Name', 'Format', 'Columns'];
+    const lastIndexInFTM = logMetaData.FMT.length;
+    for (let i = 1; i < lineArray.length; i += 1) {
+      if (i < 5) {
+        logMetaData.FMT[lastIndexInFTM][columns[i - 1]] = lineArray[i];
+      } else if (i === 5) {
+        logMetaData.FMT[lastIndexInFTM][columns[i - 1]] = [];
+        const mycols = lineArray[i].split(',');
+        for (let j = 0; j < mycols.length; j += 1) {
+          logMetaData.FMT[lastIndexInFTM][columns[i - 1]].push(mycols[j]);
+        }
+      }
+    }
+  }
+
+  function parseMSG(lineArray) {
+  // Check if object exists and create one if it doesnt
+    // Parse the column
+    const lastIndexInDataArray = myLogVar[object2Extract].length;
+    for (let i = 1; i < lineArray.length; i += 1) {
+      const columnName = myColumnMetadata[i - 1];
+      if (Number.isNaN(Number(lineArray[i]))) {
+        myLogVar[object2Extract][lastIndexInDataArray][columnName] = lineArray[i];
+      } else {
+        myLogVar[object2Extract][lastIndexInDataArray][columnName] = Number(lineArray[i]);
+      }
+    }
+  }
+
+  lineReader.eachLine(myLogPath, (line, last) => { // eslint-disable-line
+    const lineArr = line.split(', ');
+
+    if (lineArr[0] === 'FMT') {
+      parseFMT(lineArr);
+    } if (last) {
+      findMyMetadata();
+    }
+  });
+
+
+  lineReader.eachLine(myLogPath, (line, last) => {
+    const lineArr = line.split(', ');
+
+    if (lineArr[0] === object2Extract) {
+      parseMSG(lineArr);
+    }
+    if (last) {
+      if (fs.existsSync(myJSONPath)) {
+        fs.unlinkSync(myJSONPath);
+      }
+      fs.appendFileSync(myJSONPath, JSON.stringify(myLogVar));
     }
   });
 };
 
-export const txtObject2JSON = (object2Extract, myLogPath, myJSONPath = `${myLogPath}-${object2Extract}.json`) => {
-  txt2var(myLogPath, (myLogVar) => {
-    // check for json extension
-    let myFinalPath = myJSONPath;
-    const myExtension = myFinalPath.slice(-5);
-    if (myExtension !== '.json') { myFinalPath = `${myJSONPath}.json`; }
-    if (myFinalPath.length === 5) { myFinalPath = `${myLogPath}-${object2Extract}.json`; }
+const txtObject2JSON = (object2Extract, myLogPath, myJSONPath) => {
+  const myLogVar = {};
+  myLogVar[object2Extract] = [];
 
-    // add numbers if path exists. do not overwrite or delete
-    let copy = 1;
-    while (fs.existsSync(myFinalPath)) {
-      myFinalPath = myFinalPath.slice(0, -5) + copy + myFinalPath.slice(-5);
-      copy += 1;
+  if (!fs.existsSync(myLogPath)) {
+    throw new Error('Log File Does not Exist');
+  }
+
+  function parseDataLog(dataLine) {
+    const removeBrakets = dataLine.substr(1).slice(0, -1);
+    const splitItems = removeBrakets.split(', ');
+
+    const resultObject = {};
+    splitItems.forEach((keyValue) => {
+      const splitKeyValue = keyValue.split(' : ');
+      const itemKey = splitKeyValue[0];
+      const itemData = splitKeyValue[1];
+      if (Number.isNaN(Number(itemData))) {
+        resultObject[itemKey] = itemData;
+      } else {
+        resultObject[itemKey] = Number(itemData);
+      }
+    });
+    return resultObject;
+  }
+
+  function parseLine(textLine) {
+    const lineArr = textLine.split(' ');
+    const finalLineArr = lineArr.slice(0, 3);
+    finalLineArr.push(lineArr.slice(3).join(' '));
+    finalLineArr[1] = finalLineArr[1].slice(0, -1);
+
+    const timeStamp = finalLineArr.slice(0, 2).join(' ');
+    const dataName = finalLineArr[2];
+    const dataLog = finalLineArr[3];
+
+    if (dataName === object2Extract) {
+      const lastIndexInDataArray = myLogVar[object2Extract].length;
+
+      const dataLogObject = parseDataLog(dataLog);
+      dataLogObject.TimeLog = timeStamp;
+      myLogVar[dataName][lastIndexInDataArray] = dataLogObject;
     }
-    const logHasObject = Object.prototype.hasOwnProperty.call(myLogVar, object2Extract);
-    if (logHasObject) {
-      const result = {};
-      result[object2Extract] = myLogVar[object2Extract];
-      fs.appendFileSync(myFinalPath, JSON.stringify(result));
-    } else {
-      throw new Error(`${object2Extract} not in log`);
+  }
+
+  lineReader.eachLine(myLogPath, (line, last) => {
+    parseLine(line);
+    if (last) {
+      if (fs.existsSync(myJSONPath)) {
+        fs.unlinkSync(myJSONPath);
+      }
+      fs.appendFileSync(myJSONPath, JSON.stringify(myLogVar));
     }
   });
+};
+
+export {
+  txtObject2JSON,
+  logObject2JSON,
+  txt2JSON,
+  log2JSON,
+  txt2var,
+  log2var,
 };
