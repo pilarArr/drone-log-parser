@@ -181,9 +181,8 @@ const txt2JSON = (myLogPath, myJSONPath = `${myLogPath}.json`) => {
 const logObject2JSON = (object2Extract, myLogPath, myJSONPath) => {
   const myLogVar = {};
   myLogVar[object2Extract] = [];
-  
-  const logMetaData = {};
-  logMetaData.FMT = [];
+
+  const logMetaData = [];
 
   if (!fs.existsSync(myLogPath)) {
     throw new Error('Log File Does not Exist');
@@ -195,35 +194,29 @@ const logObject2JSON = (object2Extract, myLogPath, myJSONPath) => {
     // Search for the FMT value to get columns
     // TODO try to make this bisection search after a merge-sort of the FMT
     // array by name to make the search faster.
-    const numberOfFMTMessages = logMetaData.FMT.length;
+    const numberOfFMTMessages = logMetaData.length;
     for (let i = 0; i < numberOfFMTMessages; i += 1) {
-      if (logMetaData.FMT[i].Name === object2Extract) {
-        myColumnMetadata = logMetaData.FMT[i].Columns;
+      if (logMetaData[i].Name === object2Extract) {
+        myColumnMetadata = logMetaData[i].Columns;
         break;
       }
     }
   }
 
   function parseFMT(lineArray) {
-    const columns = ['Type', 'Length', 'Name', 'Format', 'Columns'];
-    const lastIndexInFTM = logMetaData.FMT.length;
-    for (let i = 1; i < lineArray.length; i += 1) {
-      if (i < 5) {
-        logMetaData.FMT[lastIndexInFTM][columns[i - 1]] = lineArray[i];
-      } else if (i === 5) {
-        logMetaData.FMT[lastIndexInFTM][columns[i - 1]] = [];
-        const mycols = lineArray[i].split(',');
-        for (let j = 0; j < mycols.length; j += 1) {
-          logMetaData.FMT[lastIndexInFTM][columns[i - 1]].push(mycols[j]);
-        }
-      }
-    }
+    logMetaData.push({
+      Type: lineArray[1],
+      Length: lineArray[2],
+      Name: lineArray[3],
+      Format: lineArray[4],
+      Columns: lineArray[5].split(','),
+    });
   }
 
   function parseMSG(lineArray) {
   // Check if object exists and create one if it doesnt
     // Parse the column
-    const lastIndexInDataArray = myLogVar[object2Extract].length;
+    const lastIndexInDataArray = myLogVar[object2Extract].length - 1;
     for (let i = 1; i < lineArray.length; i += 1) {
       const columnName = myColumnMetadata[i - 1];
       if (Number.isNaN(Number(lineArray[i]))) {
@@ -250,6 +243,48 @@ const logObject2JSON = (object2Extract, myLogPath, myJSONPath) => {
 
     if (lineArr[0] === object2Extract) {
       parseMSG(lineArr);
+    }
+    if (last) {
+      if (fs.existsSync(myJSONPath)) {
+        fs.unlinkSync(myJSONPath);
+      }
+      fs.appendFileSync(myJSONPath, JSON.stringify(myLogVar));
+    }
+  });
+};
+
+const logCAM2JSON = (object2Extract, myLogPath, myJSONPath) => {
+  const myLogVar = {};
+  myLogVar.CAM = [];
+
+  if (!fs.existsSync(myLogPath)) {
+    throw new Error('Log File Does not Exist');
+  }
+
+  function parseCAM(lineArray) {
+    // Check if object exists and create one if it doesnt
+    // Parse the column
+
+    myLogVar.CAM.push({
+      TimeUS: Number(lineArray[1]),
+      GPSTime: Number(lineArray[2]),
+      GPSWeek: Number(lineArray[3]),
+      Lat: Number(lineArray[4]),
+      Lng: Number(lineArray[5]),
+      Alt: Number(lineArray[6]),
+      RelAlt: Number(lineArray[7]),
+      GPSAlt: Number(lineArray[8]),
+      Roll: Number(lineArray[9]),
+      Pitch: Number(lineArray[10]),
+      Yaw: Number(lineArray[11]),
+    });
+  }
+
+  lineReader.eachLine(myLogPath, (line, last) => {
+    const lineArr = line.split(', ');
+
+    if (lineArr[0] === 'CAM') {
+      parseCAM(lineArr);
     }
     if (last) {
       if (fs.existsSync(myJSONPath)) {
@@ -323,4 +358,5 @@ export {
   log2JSON,
   txt2var,
   log2var,
+  logCAM2JSON,
 };

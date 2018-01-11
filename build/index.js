@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.log2var = exports.txt2var = exports.log2JSON = exports.txt2JSON = exports.logObject2JSON = exports.txtObject2JSON = undefined;
+exports.logCAM2JSON = exports.log2var = exports.txt2var = exports.log2JSON = exports.txt2JSON = exports.logObject2JSON = exports.txtObject2JSON = undefined;
 
 var _lineReader = require('line-reader');
 
@@ -208,8 +208,7 @@ var logObject2JSON = function logObject2JSON(object2Extract, myLogPath, myJSONPa
   var myLogVar = {};
   myLogVar[object2Extract] = [];
 
-  var logMetaData = {};
-  logMetaData.FMT = [];
+  var logMetaData = [];
 
   if (!_fs2.default.existsSync(myLogPath)) {
     throw new Error('Log File Does not Exist');
@@ -221,35 +220,29 @@ var logObject2JSON = function logObject2JSON(object2Extract, myLogPath, myJSONPa
     // Search for the FMT value to get columns
     // TODO try to make this bisection search after a merge-sort of the FMT
     // array by name to make the search faster.
-    var numberOfFMTMessages = logMetaData.FMT.length;
+    var numberOfFMTMessages = logMetaData.length;
     for (var i = 0; i < numberOfFMTMessages; i += 1) {
-      if (logMetaData.FMT[i].Name === object2Extract) {
-        myColumnMetadata = logMetaData.FMT[i].Columns;
+      if (logMetaData[i].Name === object2Extract) {
+        myColumnMetadata = logMetaData[i].Columns;
         break;
       }
     }
   }
 
   function parseFMT(lineArray) {
-    var columns = ['Type', 'Length', 'Name', 'Format', 'Columns'];
-    var lastIndexInFTM = logMetaData.FMT.length;
-    for (var i = 1; i < lineArray.length; i += 1) {
-      if (i < 5) {
-        logMetaData.FMT[lastIndexInFTM][columns[i - 1]] = lineArray[i];
-      } else if (i === 5) {
-        logMetaData.FMT[lastIndexInFTM][columns[i - 1]] = [];
-        var mycols = lineArray[i].split(',');
-        for (var j = 0; j < mycols.length; j += 1) {
-          logMetaData.FMT[lastIndexInFTM][columns[i - 1]].push(mycols[j]);
-        }
-      }
-    }
+    logMetaData.push({
+      Type: lineArray[1],
+      Length: lineArray[2],
+      Name: lineArray[3],
+      Format: lineArray[4],
+      Columns: lineArray[5].split(',')
+    });
   }
 
   function parseMSG(lineArray) {
     // Check if object exists and create one if it doesnt
     // Parse the column
-    var lastIndexInDataArray = myLogVar[object2Extract].length;
+    var lastIndexInDataArray = myLogVar[object2Extract].length - 1;
     for (var i = 1; i < lineArray.length; i += 1) {
       var columnName = myColumnMetadata[i - 1];
       if (Number.isNaN(Number(lineArray[i]))) {
@@ -276,6 +269,48 @@ var logObject2JSON = function logObject2JSON(object2Extract, myLogPath, myJSONPa
 
     if (lineArr[0] === object2Extract) {
       parseMSG(lineArr);
+    }
+    if (last) {
+      if (_fs2.default.existsSync(myJSONPath)) {
+        _fs2.default.unlinkSync(myJSONPath);
+      }
+      _fs2.default.appendFileSync(myJSONPath, JSON.stringify(myLogVar));
+    }
+  });
+};
+
+var logCAM2JSON = function logCAM2JSON(object2Extract, myLogPath, myJSONPath) {
+  var myLogVar = {};
+  myLogVar.CAM = [];
+
+  if (!_fs2.default.existsSync(myLogPath)) {
+    throw new Error('Log File Does not Exist');
+  }
+
+  function parseCAM(lineArray) {
+    // Check if object exists and create one if it doesnt
+    // Parse the column
+
+    myLogVar.CAM.push({
+      TimeUS: Number(lineArray[1]),
+      GPSTime: Number(lineArray[2]),
+      GPSWeek: Number(lineArray[3]),
+      Lat: Number(lineArray[4]),
+      Lng: Number(lineArray[5]),
+      Alt: Number(lineArray[6]),
+      RelAlt: Number(lineArray[7]),
+      GPSAlt: Number(lineArray[8]),
+      Roll: Number(lineArray[9]),
+      Pitch: Number(lineArray[10]),
+      Yaw: Number(lineArray[11])
+    });
+  }
+
+  _lineReader2.default.eachLine(myLogPath, function (line, last) {
+    var lineArr = line.split(', ');
+
+    if (lineArr[0] === 'CAM') {
+      parseCAM(lineArr);
     }
     if (last) {
       if (_fs2.default.existsSync(myJSONPath)) {
@@ -348,3 +383,4 @@ exports.txt2JSON = txt2JSON;
 exports.log2JSON = log2JSON;
 exports.txt2var = txt2var;
 exports.log2var = log2var;
+exports.logCAM2JSON = logCAM2JSON;
